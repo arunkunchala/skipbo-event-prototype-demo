@@ -153,6 +153,8 @@
   @keyframes capCrack { 0%{ transform:scale(0.4) rotate(0);} 30%{ transform:scale(1.2) rotate(-14deg);}
     50%{ transform:scale(1) rotate(12deg);} 70%{ transform:scale(1.25) rotate(-6deg);} 100%{ transform:scale(1) rotate(0);} }
   .open-chips { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:10px 0 14px; }
+  .grab-rule{display:flex;flex-direction:column;gap:2px;margin:0 0 9px;padding:9px 11px;border-radius:12px;background:rgba(6,29,66,.55);border:1px solid rgba(255,255,255,.16);color:#ddecff;font-size:11px;line-height:1.3;font-weight:700}
+  .grab-rule strong{color:var(--sb-yellow);font-size:12px;letter-spacing:.4px}
 </style>
 </head>
 <body>
@@ -163,6 +165,7 @@
       <span class="strong-badge" id="strongBadge" style="display:none">💪 <span id="strongT">5:00</span></span>
       <button class="info-btn" id="infoBtn" aria-label="Info">ⓘ</button>
     </div>
+    <div class="grab-rule"><strong>AIM → DROP → OPEN</strong><span>Hold ◀ or ▶ to line the claw over a capsule. Every miss permanently powers up the next grab.</span></div>
 
     <div id="cabinet">
       <div id="marquee">✦ LUCKY GRABBER ✦</div>
@@ -196,7 +199,7 @@
       <button class="move-btn" id="btnR">▶</button>
     </div>
     <div class="earn-row">
-      <button class="sb-btn sb-btn-blue sb-btn-sm" id="earnBtn">🃏 Play a level (+1 grab)</button>
+      <button class="sb-btn sb-btn-blue sb-btn-sm" id="earnBtn">Claim Adventure payout (+1 grab)</button>
       <button class="sb-btn sb-btn-yellow sb-btn-sm" id="shopBtn">🛒 Get Grabs</button>
     </div>
 
@@ -238,7 +241,7 @@
     strongUntil: 0, shuffleDay: "", caps: null
   });
   var S = st.data;
-  if (!S.endTs) { S.endTs = Date.now() + 48 * 3600 * 1000; }
+  if (!S.endTs || S.endTs <= Date.now()) { S.endTs = Date.now() + 48 * 3600 * 1000; }
   if (!S.caps) { S.caps = poolDef(false); }
   st.save();
   if (S.premium) document.body.classList.add("premium");
@@ -601,7 +604,7 @@
   document.getElementById("infoBtn").addEventListener("click", function () {
     var m = SB.modal(
       "<h3>🕹️ Lucky Grabber</h3>" +
-      "<p style='font-size:13px;text-align:left;line-height:1.5'>Move the claw and grab capsules from a <b>finite, fully visible prize pool</b> — every capsule stays in the machine until you win it, so clearing the whole pool (jackpot included) is guaranteed with enough grabs. Success odds are shown per capsule tier, and <b>every miss charges the GRIP POWER meter by +34%</b>; a full meter makes your next grab a MEGA GRAB with a 100% catch on anything. Monetization is contextual: when you run out of grabs mid-pool you can buy grab packs, a temporary Strong Claw odds boost, or a guaranteed Gold capsule. Because failed grabs always feed the pity meter and odds are published, no spend ever feels wasted — the honest transparency itself drives conversion.</p>" +
+      "<p style='font-size:13px;text-align:left;line-height:1.5'>Hold ◀ or ▶ to position the claw, then press GRAB. Every capsule remains in the visible prize pool until won. The listed percentage is its catch chance, and each miss adds +34% GRIP POWER. A full meter guarantees the next catch, so every attempt moves you closer to clearing the machine.</p>" +
       "<button class='sb-btn sb-btn-blue sb-btn-block' id='okI'>Got it!</button>");
     m.el.querySelector("#okI").addEventListener("click", m.close);
   });

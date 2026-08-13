@@ -79,13 +79,15 @@
     if (opts.resetKey) {
       var r = document.createElement("button");
       r.className = "sb-demo-reset";
-      r.textContent = "⟲ Reset demo";
+      r.textContent = "⟲";
+      r.title = "Reset this demo";
+      r.setAttribute("aria-label", "Reset this demo");
       r.addEventListener("click", function () {
         sDel("sb_evt_" + opts.resetKey);
         sDel(WKEY);
         location.reload();
       });
-      document.body.appendChild(r);
+      bar.insertBefore(r, bar.querySelector(".sb-wallet"));
     }
     ensureFxLayers();
     renderWallet();
@@ -119,7 +121,42 @@
   // ---------- haptic ----------
   var userInteracted = false;
   window.addEventListener("pointerdown", function () { userInteracted = true; }, { once: true, capture: true });
-  function haptic(ms) { try { if (userInteracted && navigator.vibrate) navigator.vibrate(ms || 15); } catch (e) {} }
+  var audioCtx = null;
+  function sound(kind) {
+    if (!userInteracted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain(), now = audioCtx.currentTime;
+      o.type = kind === "reward" ? "sine" : "triangle";
+      o.frequency.setValueAtTime(kind === "reward" ? 660 : 180, now);
+      o.frequency.exponentialRampToValueAtTime(kind === "reward" ? 990 : 145, now + .09);
+      g.gain.setValueAtTime(.0001, now);
+      g.gain.exponentialRampToValueAtTime(kind === "reward" ? .055 : .025, now + .012);
+      g.gain.exponentialRampToValueAtTime(.0001, now + (kind === "reward" ? .17 : .08));
+      o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now + .19);
+    } catch (e) {}
+  }
+  function haptic(ms) {
+    try { if (userInteracted && navigator.vibrate) navigator.vibrate(ms || 15); } catch (e) {}
+    sound((ms || 15) >= 20 ? "reward" : "tap");
+  }
+
+  document.addEventListener("pointerdown", function (e) {
+    var hit = e.target && e.target.closest && e.target.closest("button,[role='button'],[data-action],.pb-item,.td-tile,.capsule,.parcel");
+    if (!hit || hit.disabled) return;
+    hit.classList.add("sb-pressed");
+    var ripple = document.createElement("span");
+    ripple.className = "sb-tap-ripple";
+    ripple.style.left = e.clientX + "px"; ripple.style.top = e.clientY + "px";
+    document.body.appendChild(ripple);
+    setTimeout(function(){ ripple.remove(); }, 450);
+  }, {passive:true});
+  function clearPressed() {
+    document.querySelectorAll(".sb-pressed").forEach(function(el){ el.classList.remove("sb-pressed"); });
+  }
+  document.addEventListener("pointerup", clearPressed, {passive:true});
+  document.addEventListener("pointercancel", clearPressed, {passive:true});
 
   // ---------- flying rewards + grant ----------
   function ensureFxLayers() {
@@ -203,6 +240,7 @@
       '<div class="sb-sheet">' +
       "<h3>" + (opts.label || "Special Offer") + "</h3>" +
       '<div class="sb-sheet-sub">' + (opts.sub || "One-time offer · Skip-Bo Mini Event") + "</div>" +
+      '<div class="sb-demo-purchase">✓ INTERACTIVE CONCEPT · NO REAL CHARGE</div>' +
       (chips ? '<div class="sb-sheet-contents">' + chips + "</div>" : "") +
       '<button class="sb-btn sb-btn-green sb-btn-block" id="sb-sheet-buy"><span>Buy now</span><span class="sb-price-tag">' + opts.price + "</span></button>" +
       '<button class="sb-sheet-cancel" id="sb-sheet-cancel">No thanks</button>' +

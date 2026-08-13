@@ -32,9 +32,13 @@
   .cs-slot.owned { border:2px solid rgba(27,42,74,.15); background:#fff; box-shadow:0 2px 6px rgba(27,42,74,.18); }
   .cs-slot.owned .art { font-size:28px; }
   .cs-slot.epicown { background:linear-gradient(160deg,#fff8e1,#ffe9a8); border-color:var(--sb-yellow-dark); }
-  .cs-slot .nm { font-size:8.5px; font-weight:800; color:var(--sb-ink); line-height:1.05; }
+  .cs-slot .nm { font-size:10px; font-weight:900; color:var(--sb-ink); line-height:1.1; }
   .cs-slot.empty .nm { opacity:.5; }
-  .cs-slot .rar { font-size:8px; letter-spacing:-1px; }
+  .cs-slot .rar { font-size:9px; letter-spacing:-1px; }
+  .cs-slot.owned::after { content:"COLLECTED"; position:absolute; top:4px; right:4px; padding:2px 4px; border-radius:4px; background:rgba(27,42,74,.82); color:#fff; font-size:6.5px; letter-spacing:.45px; font-weight:900; }
+  .cs-slot.owned:nth-child(3n+1){background:linear-gradient(155deg,#fff 42%,#d7f1ff 42% 72%,#ffe0a8 72%)}
+  .cs-slot.owned:nth-child(3n+2){background:linear-gradient(155deg,#fff 45%,#f7d4e6 45% 69%,#d6f4d2 69%)}
+  .cs-slot.owned:nth-child(3n){background:linear-gradient(155deg,#fff 40%,#e9ddff 40% 68%,#ffe99a 68%)}
   .cs-slot.glow { box-shadow:0 0 0 3px var(--sb-yellow), 0 0 18px rgba(255,199,44,.9); }
   .cs-slot.stamp .inner-stamp { animation:csStamp .45s cubic-bezier(.34,1.7,.64,1); }
   @keyframes csStamp { 0%{transform:scale(2.1) rotate(-9deg);opacity:0;} 60%{transform:scale(.92) rotate(2deg);opacity:1;} 100%{transform:scale(1) rotate(0);} }
@@ -64,7 +68,7 @@
   .cs-overlay { position:fixed; inset:0; z-index:260; background:rgba(8,16,36,.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:20px; }
   .cs-ov-title { color:#fff; font-weight:900; font-size:18px; text-shadow:0 2px 0 rgba(0,0,0,.4); }
   .cs-ov-cards { display:flex; gap:12px; }
-  .cs-flip { width:96px; height:132px; perspective:700px; cursor:pointer; }
+  .cs-flip { width:96px; height:132px; padding:0; border:0; background:transparent; perspective:700px; cursor:pointer; }
   .cs-flip-inner { position:relative; width:100%; height:100%; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.34,1.3,.5,1); }
   .cs-flip.epic .cs-flip-inner { transition-duration:1.15s; }
   .cs-flip.flipped .cs-flip-inner { transform:rotateY(180deg); }
@@ -103,6 +107,17 @@
   .cs-shop-item .p { margin-left:auto; background:var(--sb-green); color:#fff; font-weight:900; font-size:13px; border-radius:999px; padding:6px 10px; flex:0 0 auto; }
   .cs-shop-item .gbadge { position:absolute; top:-7px; left:8px; background:var(--sb-blue); color:#fff; font-size:8.5px; font-weight:900; border-radius:999px; padding:2px 7px; }
   .cs-timerbar { display:flex; justify-content:center; margin-bottom:10px; }
+  .cs-rule { margin:0 0 10px; padding:9px 11px; border-radius:12px; background:rgba(7,32,71,.52); border:1px solid rgba(255,255,255,.16); color:#fff; font-size:12px; line-height:1.35; font-weight:800; text-align:center; }
+  .cs-rule b { color:var(--sb-yellow); }
+  @media(max-width:420px){
+    .cs-slot{aspect-ratio:1/.95}
+    .cs-slot.empty .art,.cs-slot.owned .art{font-size:23px}
+    .cs-album{padding:9px;margin-bottom:9px}
+    .cs-grid{gap:6px}
+    .cs-rule{padding:7px 9px;margin-bottom:8px;font-size:11px}
+    .cs-hud{margin-bottom:8px}
+    .cs-tabs{margin-bottom:8px}
+  }
 </style>
 </head>
 <body>
@@ -111,6 +126,7 @@
 
   <div class="cs-timerbar"><span class="sb-timer-chip">⏳ Season ends in <span id="cs-cd"></span></span></div>
   <div id="cs-lastchance" class="cs-lastchance" style="display:none">🔥 Last chance — album resets at season end!</div>
+  <div class="cs-rule"><b>OPEN PACKS</b> → reveal 3 postcards → complete either 9-card scene. Duplicates fill the Wildcard Meter instead of going to waste.</div>
 
   <div class="cs-hud">
     <div class="cs-ring-wrap">
@@ -147,7 +163,7 @@
     <button class="sb-btn sb-btn-yellow sb-btn-block" id="cs-open" style="position:relative">🎴 Open Pack<span class="cs-badge" id="cs-packbadge">2</span></button>
     <div class="cs-freetimer" id="cs-freetimer"></div>
     <div class="cs-pack-row">
-      <button class="sb-btn sb-btn-green sb-btn-sm" id="cs-play">▶️ Play a level (+1 pack)</button>
+      <button class="sb-btn sb-btn-green sb-btn-sm" id="cs-play">Claim Adventure payout (+1 pack)</button>
       <button class="sb-btn sb-btn-blue sb-btn-sm" id="cs-shop">🛍️ Postcard Shop</button>
     </div>
   </div>
@@ -181,7 +197,7 @@ var METER_MAX=8, FREE_MS=90000, FREE_CAP=2;
 // ---------- state ----------
 var st=SB.store("collectors-showcase",{end:0,owned:{},meter:0,packs:2,nextFree:0,pageDone:{},albumDone:false,cardBack:false,trophy:false});
 var s=st.data;
-if(!s.end){ s.end=Date.now()+72*3600000; s.nextFree=Date.now()+FREE_MS; st.save(); }
+if(!s.end || s.end<=Date.now()){ s.end=Date.now()+72*3600000; s.nextFree=Date.now()+FREE_MS; st.save(); }
 var curPage="beach", busy=false, pillEl=null;
 
 // ---------- countdown ----------
@@ -260,7 +276,7 @@ function openPack(opts){
   var wrap=ov.querySelector("#cs-ovc"), flipped=0, seen={};
   pulls.forEach(function(c,i){
     var dupe=!!ownedSnapshot[c.id]||!!seen[c.id]; seen[c.id]=true;
-    var f=document.createElement("div");
+    var f=document.createElement("button"); f.type="button"; f.setAttribute("aria-label","Reveal postcard "+(i+1)+" of 3");
     f.className="cs-flip"+(c.r===3?" epic":"")+(i===0?" ready":"");
     f.innerHTML='<div class="cs-flip-inner"><div class="cs-face back"><div class="logo">📮</div><div class="txt">SKIP-BO</div></div>'+
       '<div class="cs-face front"><div class="art">'+c.e+'</div><div class="nm">'+c.n+'</div><div class="rar">'+stars(c.r)+'</div>'+
@@ -440,10 +456,11 @@ function offerCompletePage(p){
 
 // ---------- info ----------
 document.getElementById("cs-info").addEventListener("click",function(){
-  SB.modal('<h3 style="margin:0">ⓘ Collector\'s Showcase</h3><div style="text-align:left;font-size:13px;line-height:1.5;color:var(--sb-ink);margin-top:8px;font-weight:600">'+
+  var m=SB.modal('<h3 style="margin:0">ⓘ Collector\'s Showcase</h3><div style="text-align:left;font-size:13px;line-height:1.5;color:var(--sb-ink);margin-top:8px;font-weight:600">'+
   '<p>A sticker-album event: open packs of Summer Postcards and stamp them into two 9-slot pages, with rarity odds of 70/25/5. Duplicates are never dead pulls — each one adds +1 to the Wildcard Meter, and a full meter lets you claim ANY missing postcard.</p>'+
-  '<p>Monetization leans on album-completion compulsion: empty slots with visible silhouettes generate want, and the "Almost there! 8/9" offer appears exactly when one missing card blocks a page reward. As the 72-hour deadline nears, wildcard and complete-the-page upsells intensify because the album resets at season end.</p>'+
-  '<p>Every purchase is followed by a pack-opening or stamping celebration, so spending always pays off with a moment of delight.</p></div>');
+  '<p>Open a pack, then tap each face-down postcard to reveal it. New cards stamp into the album; duplicates fill the Wildcard Meter. Complete either 9-card scene for its page reward, or fill both for the grand prize. Optional shop purchases are simulated and clearly labelled before confirmation.</p>'+
+  '<button class="sb-btn sb-btn-blue sb-btn-block" id="cs-info-ok">Got it</button></div>');
+  m.el.querySelector("#cs-info-ok").addEventListener("click",m.close);
 });
 
 render();

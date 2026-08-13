@@ -47,7 +47,7 @@
     background:linear-gradient(180deg,#fffdf4,#f4e6c8);
     border:2px solid rgba(138,95,42,0.55);
     box-shadow:0 3px 6px rgba(0,0,0,0.3);
-    cursor:pointer; position:relative;
+    width:100%; padding:0; font:inherit; cursor:pointer; position:relative;
     animation:pbDrop 0.35s cubic-bezier(0.34,1.56,0.64,1);
   }
   .pb-slot .ic { font-size:26px; line-height:1; }
@@ -93,20 +93,19 @@
 
   /* ---------- shelf ---------- */
   .pb-shelf-title { color:#fff; font-weight:800; font-size:13px; margin:4px 2px 7px; text-shadow:0 1px 0 rgba(0,0,0,0.3); }
-  .pb-shelf { display:flex; gap:9px; overflow-x:auto; padding:4px 2px 14px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-  .pb-shelf::-webkit-scrollbar { display:none; }
+  .pb-shelf { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; padding:4px 2px 14px; }
   .pb-item {
-    flex:0 0 auto; width:96px; border-radius:13px; padding:9px 6px 8px;
+    min-width:0; min-height:104px; border-radius:13px; padding:10px 6px 8px;
     background:linear-gradient(180deg,#fffdf4,#f0e2c4);
     border:2px solid rgba(27,42,74,0.2);
     box-shadow:0 3px 8px rgba(0,0,0,0.3);
     display:flex; flex-direction:column; align-items:center; gap:3px;
-    cursor:pointer; position:relative; transition:transform 0.1s;
+    width:100%; color:inherit; font:inherit; cursor:pointer; position:relative; transition:transform 0.1s;
   }
   .pb-item:active { transform:scale(0.94); }
   .pb-item .ic { font-size:30px; line-height:1.1; }
-  .pb-item .nm { font-size:10px; font-weight:800; text-align:center; color:var(--sb-ink); line-height:1.15; min-height:23px; }
-  .pb-item .meta { font-size:9px; font-weight:800; color:#5a6b8c; }
+  .pb-item .nm { font-size:11px; font-weight:900; text-align:center; color:var(--sb-ink); line-height:1.15; min-height:25px; }
+  .pb-item .meta { font-size:10px; font-weight:800; color:#5a6b8c; text-align:center; }
   .pb-item .stock { position:absolute; top:-7px; right:-5px; background:var(--sb-blue); color:#fff;
     font-size:10px; font-weight:900; border-radius:999px; padding:2px 7px; box-shadow:0 1px 3px rgba(0,0,0,0.4); }
   .pb-item.out { filter:grayscale(0.9); opacity:0.5; }
@@ -121,6 +120,7 @@
     position:fixed; bottom:calc(env(safe-area-inset-bottom,0px) + 10px); left:50%;
     transform:translateX(-50%); width:min(452px, calc(100% - 24px)); z-index:90;
   }
+  .sb-demo-reset { bottom:calc(env(safe-area-inset-bottom,0px) + 72px); }
   .sb-main { padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px); }
 
   /* ---------- fly ---------- */
@@ -164,6 +164,19 @@
   .pb-deluxe p { margin:0 0 10px; font-size:12px; color:#e3d5ff; }
   .pb-mode-chip { display:inline-block; background:var(--sb-yellow); color:var(--sb-ink);
     font-size:10px; font-weight:900; border-radius:999px; padding:2px 9px; margin-left:6px; vertical-align:2px; }
+  .pb-loop {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin:0 0 8px;
+    color:#d9ebff; font-size:10px; font-weight:900; text-align:center;
+  }
+  .pb-loop span { padding:7px 4px; border-radius:10px; background:rgba(9,34,75,.42); border:1px solid rgba(255,255,255,.14); }
+  .pb-loop b { color:var(--sb-yellow); }
+  .pb-wild-card {
+    display:grid; place-items:center; width:34px; height:46px; border-radius:6px;
+    background:linear-gradient(150deg,#1D4FA1,#55a7ed); border:2px solid #fff;
+    box-shadow:0 2px 5px rgba(0,0,0,.28); color:#FFC72C; font-size:7px;
+    line-height:1.05; font-weight:900; text-align:center;
+  }
+  @media(max-width:360px){ .pb-shelf{grid-template-columns:repeat(2,minmax(0,1fr));} }
 </style>
 </head>
 <body>
@@ -173,6 +186,7 @@
       <span class="sb-timer-chip">⏳ <span id="pb-timer">--</span></span>
       <button class="pb-info-btn" id="pb-info">ⓘ</button>
     </div>
+    <div class="pb-loop"><span><b>1</b> PICK REWARDS</span><span><b>2</b> FILL THE BOX</span><span><b>3</b> LOCK YOUR PRICE</span></div>
 
     <div class="pb-box-wrap" id="pb-box-wrap">
       <div class="pb-flap l"></div><div class="pb-flap r"></div>
@@ -213,10 +227,11 @@
     { id:"mega",  name:"Mega Sack 5000", icon:"🏆", slots:3, val:5000, max:2, deluxe:true, rw:[{type:"coins",amount:5000}] }
   ];
   function item(id){ for (var i=0;i<ITEMS.length;i++) if (ITEMS[i].id===id) return ITEMS[i]; return null; }
+  function itemVisual(it){ return it.id === "wild" ? '<span class="pb-wild-card">SKIP-BO<br>WILD</span>' : '<span class="ic">'+it.icon+'</span>'; }
 
   var st = SB.store("prize-box", { endTs:0, packed:[], deluxeMode:false, deluxeBought:false, buys:0 });
   var S = st.data;
-  if (!S.endTs) { S.endTs = Date.now() + 24*3600*1000; st.save(); }
+  if (!S.endTs || S.endTs <= Date.now()) { S.endTs = Date.now() + 24*3600*1000; st.save(); }
   SB.countdown(document.getElementById("pb-timer"), S.endTs, function(){ SB.toast("Event ended — thanks for playing!"); });
 
   var DISC_STD = [0,20,35,45,55,62,70];
@@ -226,7 +241,7 @@
   function used(){ var t=0; S.packed.forEach(function(id){ t += item(id).slots; }); return t; }
   function totalVal(){ var t=0; S.packed.forEach(function(id){ t += item(id).val; }); return t; }
   function countOf(id){ var n=0; S.packed.forEach(function(p){ if(p===id) n++; }); return n; }
-  function rawDollars(){ return totalVal() * (S.deluxeMode ? 0.0019 : 0.0016); }
+  function rawDollars(){ return S.packed.length ? Math.max(2.49, totalVal() * (S.deluxeMode ? 0.0045 : 0.004)) : 0; }
   function price(){
     if (!S.packed.length) return 0;
     var p = rawDollars() * (1 - disc(used())/100);
@@ -256,8 +271,8 @@
     var html = "";
     S.packed.forEach(function(id, idx){
       var it = item(id);
-      html += '<div class="pb-slot'+(it.mystery?' myst':'')+(it.deluxe?' prem':'')+'" data-idx="'+idx+'" style="grid-column:span '+it.slots+'">' +
-        '<span class="ic">'+it.icon+'</span><span class="nm">'+it.name+'</span><span class="rm">✕</span></div>';
+      html += '<button type="button" class="pb-slot'+(it.mystery?' myst':'')+(it.deluxe?' prem':'')+'" data-idx="'+idx+'" aria-label="Remove '+it.name+' from box" style="grid-column:span '+it.slots+'">' +
+        itemVisual(it)+'<span class="nm">'+it.name+'</span><span class="rm">✕</span></button>';
     });
     for (var i=0; i<cap()-used(); i++) html += '<div class="pb-cell">＋</div>';
     grid.innerHTML = html;
@@ -270,9 +285,9 @@
     ITEMS.forEach(function(it){
       if (it.deluxe && !S.deluxeMode) return;
       var left = it.max - countOf(it.id);
-      sh += '<div class="pb-item'+(it.mystery?' myst':'')+(it.deluxe?' prem':'')+(left<=0?' out':'')+'" data-id="'+it.id+'">' +
-        '<span class="stock">×'+left+'</span><span class="ic">'+it.icon+'</span><span class="nm">'+it.name+'</span>' +
-        '<span class="meta">'+it.slots+' slot'+(it.slots>1?'s':'')+' · '+(it.mystery?'value ???':'val '+it.val)+'</span></div>';
+      sh += '<button type="button" class="pb-item'+(it.mystery?' myst':'')+(it.deluxe?' prem':'')+(left<=0?' out':'')+'" data-id="'+it.id+'" aria-label="Pack '+it.name+', uses '+it.slots+' slot'+(it.slots>1?'s':'')+'">' +
+        '<span class="stock">×'+left+'</span>'+itemVisual(it)+'<span class="nm">'+it.name+'</span>' +
+        '<span class="meta">'+it.slots+' slot'+(it.slots>1?'s':'')+' · '+(it.mystery?'value ???':'val '+it.val)+'</span></button>';
     });
     shelf.innerHTML = sh;
     shelf.querySelectorAll(".pb-item").forEach(function(el){
@@ -457,8 +472,8 @@
   document.getElementById("pb-info").addEventListener("click", function(){
     var m = SB.modal(
       '<h3 style="margin:0 0 8px">📦 Pack Your Prize Box</h3>' +
-      '<p style="font-size:13px;line-height:1.5;text-align:left;margin:0 0 8px">Players build their own bundle by packing rewards from the shelf into a 6-slot box, and the price updates live based on what they choose. A discount meter climbs from 0% to 70% OFF as slots fill, so a full box is always the best deal — nudging players to complete the basket rather than buy one small item.</p>' +
-      '<p style="font-size:13px;line-height:1.5;text-align:left;margin:0 0 12px">Self-selected bundles convert better than fixed offers because every item feels chosen, and the post-purchase Deluxe upsell (8 slots + premium items) captures high spenders. The Mystery Present adds gacha-style suspense to the unboxing beat.</p>' +
+      '<p style="font-size:13px;line-height:1.5;text-align:left;margin:0 0 8px">Tap any reward on the shelf to pack it. Bigger rewards take more room, and filling more slots raises your discount. Tap a packed reward to return it to the shelf. When the mix and price feel right, seal your box and watch every chosen reward unpack.</p>' +
+      '<p style="font-size:13px;line-height:1.5;text-align:left;margin:0 0 12px">The Mystery Present hides its exact contents until unboxing. After sealing a standard box, you can optionally preview an 8-slot Deluxe box with two premium shelf rewards.</p>' +
       '<button class="sb-btn sb-btn-blue sb-btn-sm" id="pb-info-ok">Got it</button>');
     m.el.querySelector("#pb-info-ok").addEventListener("click", m.close);
   });

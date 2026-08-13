@@ -83,9 +83,9 @@
   /* recipes */
   .recipes { margin-bottom:12px; }
   .recipes h4 { margin:0 0 8px; font-size:14px; }
-  .rec { display:flex; align-items:center; gap:6px; font-size:15px; padding:5px 6px; border-radius:10px; }
+  .rec { display:flex; align-items:center; gap:7px; font-size:17px; padding:8px; border-radius:10px; }
   .rec.hot { background:rgba(255,199,44,0.3); outline:2px solid var(--sb-yellow); }
-  .rec .nm { margin-left:auto; font-size:11px; font-weight:800; color:#5a6b8c; text-align:right; }
+  .rec .nm { margin-left:auto; font-size:12px; line-height:1.25; font-weight:900; color:#4e6080; text-align:right; }
   .tier { font-size:10px; font-weight:900; color:#8a6d1f; margin:6px 0 2px; letter-spacing:0.5px; }
 
   .earn { margin-bottom:12px; }
@@ -129,6 +129,9 @@
   .choose-opt .em { font-size:30px; }
   .choose-opt b { display:block; font-size:15px; color:var(--sb-ink); }
   .choose-opt span { font-size:11px; color:#5a6b8c; }
+  .ws-loop { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin:0 0 10px; }
+  .ws-loop span { border-radius:10px; padding:8px 4px; background:rgba(6,29,66,.52); border:1px solid rgba(255,255,255,.15); color:#fff; font-size:10px; text-align:center; font-weight:900; line-height:1.2; }
+  .ws-loop b { display:block; color:var(--sb-yellow); font-size:12px; }
 </style>
 </head>
 <body>
@@ -139,6 +142,7 @@
       <span class="spacer"></span>
       <button class="ws-info" id="infoBtn">ⓘ</button>
     </div>
+    <div class="ws-loop"><span><b>1 · COLLECT</b>material chips</span><span><b>2 · COMBINE</b>on the bench</span><span><b>3 · CRAFT</b>your target</span></div>
 
     <div class="sb-panel tgt" id="tgtPanel"></div>
 
@@ -152,7 +156,7 @@
     <p class="inv-title">🧰 Your materials — tap to place on bench</p>
     <div class="inv" id="inv"></div>
 
-    <button class="sb-btn sb-btn-green sb-btn-block earn" id="playBtn">🎴 Play a level · earn 2 chips</button>
+    <button class="sb-btn sb-btn-green sb-btn-block earn" id="playBtn">Claim Adventure payout · +2 material chips</button>
 
     <div class="sb-panel recipes" id="recipes"></div>
   </div>
@@ -173,7 +177,7 @@ var st = SB.store("reward-workshop", {
   bench2:false, instant:false, dbl:false, levels:0, chipsEarned:0
 });
 var S = st.data, inv = S.inv, C = S.crafts;
-if(!S.endTs){ S.endTs = Date.now() + 72*3600*1000; st.save(); }
+if(!S.endTs || S.endTs<=Date.now()){ S.endTs = Date.now() + 72*3600*1000; st.save(); }
 
 var ITEMS = {
   blue:{e:"🔵",n:"Blue Chip"}, green:{e:"🟢",n:"Green Chip"}, red:{e:"🔴",n:"Red Chip"}, gold:{e:"🟡",n:"Gold Chip"},
@@ -540,10 +544,7 @@ function showChooser(){
 // ---------- info ----------
 el("infoBtn").addEventListener("click", function(){
   var m = SB.modal('<h3 style="margin:0 0 8px">🛠️ Reward Workshop</h3>'+
-    '<p style="font-size:13px;text-align:left;line-height:1.5;margin:0">Players pick a masterpiece to build, then combine chips earned from levels into boosters, Wild Cards and finally the Premium Chest. '+
-    'The target checklist constantly shows exactly which ingredient is missing, turning vague desire into a specific, nameable want. '+
-    'Monetization sells precisely that missing piece — "1 Gold Chip · $1.99" converts far better than abstract bundles because the purchase visibly completes a craft the player already started. '+
-    'Upgrades (second bench, instant craft, double output) monetize engaged players on convenience instead of content.</p>'+
+    '<p style="font-size:13px;text-align:left;line-height:1.5;margin:0">Choose a masterpiece, then follow its highlighted recipe. Tap materials to place them on the bench; tap a filled slot to take one back. Three matching chips craft a booster, two boosters plus Gold craft a Wild Card, and two Wild Cards craft the Premium Chest. The checklist always shows the next missing ingredient.</p>'+
     '<button class="sb-btn sb-btn-blue sb-btn-block" style="margin-top:12px" id="infoOk">Got it</button>');
   m.el.querySelector("#infoOk").addEventListener("click", m.close);
 });

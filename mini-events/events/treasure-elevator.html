@@ -205,6 +205,8 @@
 
   .rise-pop { animation: risePop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes risePop { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  .elevator-rule { margin:0 0 10px; padding:9px 11px; border-radius:12px; background:rgba(6,29,66,.52); border:1px solid rgba(255,255,255,.16); color:#fff; text-align:center; font-size:12px; line-height:1.35; font-weight:800; }
+  .elevator-rule b { color:var(--sb-yellow); }
 </style>
 </head>
 <body>
@@ -218,6 +220,7 @@
       <span class="sb-timer-chip">⏳ <span id="evt-timer">--</span></span>
       <span class="value-chip">💰 Collected: <span id="total-val">0</span></span>
     </div>
+    <div class="elevator-rule"><b>CLAIM → RIDE → REVEAL.</b> Every stop contains a reward. Two hotel suites unlock longer chains of richer free floors.</div>
     <div class="tower" id="tower">
       <div class="roof-cap">✦ ✦ ✦</div>
       <div id="floors"></div>
@@ -275,6 +278,7 @@
     complete: false
   });
   var S = st.data;
+  if (!S.endTs || S.endTs <= Date.now()) { S.endTs = Date.now() + 36 * 3600 * 1000; st.save(); }
 
   // ---------- countdown ----------
   var timerEl = document.getElementById("evt-timer");
@@ -479,10 +483,9 @@
       '<div style="font-size:36px">🏨🛗</div>' +
       "<h3 style='margin:6px 0 8px'>How Treasure Elevator works</h3>" +
       '<p style="font-size:13px;line-height:1.55;text-align:left;font-weight:600;color:#3a4a6b">' +
-      "Players ride an elevator up 14 hotel floors, claiming a free reward on every floor. " +
-      "Two paywall floors ($1.99 at floor 4, $4.99 at floor 9) gate access to the richer free floors above — the purchase buys continued free claiming, so the celebration always lands after checkout, not at it. " +
-      "Upcoming rewards are visible as silhouettes, so the rooftop grand prize (5,000 coins + wilds + gems) pulls players through both price points. " +
-      "This is a progressive offer-chain pattern (ref: Royal Match's Endless Treasure, +20% revenue in its first 30 days) with escalating price tiers and a hard event timer for urgency.</p>" +
+      "Claim the reward on the elevator's current floor, then ride upward to reveal the next room. " +
+      "Most floors are free. Bellhop and Concierge suites are optional simulated purchases that open the next run of free floors. " +
+      "Everything already claimed stays yours if you stop, and every purchase in this prototype is clearly marked as a no-charge simulation.</p>" +
       '<button class="sb-btn sb-btn-blue sb-btn-block" id="info-close">Got it</button>'
     );
     m.el.querySelector("#info-close").addEventListener("click", m.close);

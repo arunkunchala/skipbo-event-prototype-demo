@@ -43,7 +43,7 @@
   .td-wrap { position:relative; margin:0 auto 12px; max-width:392px; }
   .td-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
   .td-tile {
-    position:relative; aspect-ratio:1; border-radius:9px; overflow:hidden; cursor:pointer;
+    position:relative; aspect-ratio:1; border:0; padding:0; border-radius:9px; overflow:hidden; cursor:pointer;
     background:radial-gradient(circle at 65% 20%, #2a1c0c, #1c1206);
     box-shadow:inset 0 3px 8px rgba(0,0,0,.8);
   }
@@ -165,6 +165,8 @@
     background:var(--sb-red); color:#fff; font-size:8.5px; font-weight:900; padding:2px 28px; letter-spacing:.5px;
   }
   .td-collect-fly { position:fixed; z-index:400; font-size:30px; pointer-events:none; transition:all .8s cubic-bezier(.5,-.2,.4,1.1); filter:drop-shadow(0 0 8px #ffd95e); }
+  .td-rule { display:flex; flex-direction:column; gap:2px; margin:0 0 10px; padding:9px 11px; border-radius:12px; background:rgba(7,32,71,.5); border:1px solid rgba(255,255,255,.16); color:#ddecff; font-size:11px; line-height:1.3; font-weight:700; }
+  .td-rule strong { color:var(--sb-yellow); font-size:12px; letter-spacing:.35px; }
 </style>
 </head>
 <body>
@@ -175,6 +177,8 @@
       <span class="sb-timer-chip">⏳ <span id="cd">--</span></span>
       <button class="td-info" id="infoBtn" aria-label="Info">ⓘ</button>
     </div>
+
+    <div class="td-rule"><strong>FIND THE BURIED SET</strong><span>Tap a sand tile to spend 1 shovel. Shapes and shadows reveal where each treasure continues.</span></div>
 
     <div class="td-prog-wrap">
       <div class="td-prog-label"><span>Treasures found</span><span id="progTxt">0/6</span></div>
@@ -194,7 +198,7 @@
       <button class="td-chip" id="shopBtn" style="border-color:rgba(63,193,103,.8);color:#8af0a8;"><span class="big">＋</span>Shop</button>
     </div>
 
-    <button class="sb-btn sb-btn-green sb-btn-block" id="earnBtn">🎴 Play a level <span style="font-weight:900;">(+3 ⛏️)</span></button>
+    <button class="sb-btn sb-btn-green sb-btn-block" id="earnBtn">Claim Adventure payout <span style="font-weight:900;">(+3 ⛏️)</span></button>
   </div>
 </div>
 <script src="../shared/core.js"></script>
@@ -210,7 +214,7 @@ SB.init({title:"Treasure Dig", subtitle:"Excavation Event · Limited Time", rese
 var st=SB.store("treasure-dig",{level:1,endTs:0,seeded:false,scanners:0,dyn:0,grid:null,arts:null});
 var S=st.data;
 
-if(!S.endTs){ S.endTs=Date.now()+48*3600*1000; st.save(); }
+if(!S.endTs || S.endTs<=Date.now()){ S.endTs=Date.now()+48*3600*1000; st.save(); }
 if(!S.seeded){ S.seeded=true; st.save(); SB.grantRewards([{type:"shovel",amount:10}]); SB.toast("Welcome to the dig site! +10 Shovels"); }
 
 // ---------- level generation ----------
@@ -272,9 +276,11 @@ function buildGrid(){
   gridEl.innerHTML=""; tiles=[];
   wrapEl.querySelectorAll(".td-rowmark").forEach(function(m){m.remove();});
   for(var i=0;i<N;i++){
-    var t=document.createElement("div");
+    var t=document.createElement("button");
+    t.type="button";
     t.className="td-tile";
     t.dataset.i=i;
+    t.setAttribute("aria-label","Dig sand tile "+(i+1));
     t.innerHTML='<div class="td-dirt"></div><div class="td-content"></div><div class="td-glint">✨</div><div class="td-scan"></div>';
     t.addEventListener("click", onTileTap);
     gridEl.appendChild(t); tiles.push(t);
@@ -283,7 +289,7 @@ function buildGrid(){
   for(var r=0;r<ROWS;r++){
     (function(row){
       var m=document.createElement("button");
-      m.className="td-rowmark"; m.textContent="🧨";
+      m.type="button"; m.className="td-rowmark"; m.textContent="🧨"; m.setAttribute("aria-label","Blast dig row "+(row+1));
       m.style.top=(row*100/ROWS + 100/ROWS/2)+"%";
       m.addEventListener("click", function(e){ e.stopPropagation(); blastRow(row); });
       wrapEl.appendChild(m);
@@ -601,7 +607,7 @@ document.getElementById("infoBtn").addEventListener("click",function(){
     +'<p style="font-size:13.5px;line-height:1.5;text-align:left;color:var(--sb-ink);margin:0 0 12px;">'
     +'Each tap spends a shovel to break dirt and reveal what\'s buried — artifacts, coins, gems, or stubborn rocks that take two hits. '
     +'When part of an artifact is uncovered, its neighboring buried tiles sparkle, telegraphing exactly where to dig next and creating a near-miss pull right as shovels run low. '
-    +'That is the monetization beat: contextual offers (shovels, scanner, dynamite — and a premium "Finish the Crown" bundle when the grand prize is mostly exposed) appear precisely at the moment of highest investment. '
+    +'Scanners reveal promising tiles, dynamite clears a row, and the Crown Kit can finish the rare crown after most of it has been uncovered. All purchases in this prototype are simulated and never erase progress. '
     +'Shovels are also earned by playing regular Skip-Bo levels, looping event excitement back into core-game sessions.</p>'
     +'<button class="sb-btn sb-btn-blue sb-btn-block" onclick="this.closest(\'.sb-modal-backdrop\').remove()">Got it</button>'
   );

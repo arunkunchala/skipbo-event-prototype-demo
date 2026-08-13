@@ -42,6 +42,8 @@
   }
   .pd-mult:disabled { opacity:0.35; filter:grayscale(0.7); pointer-events:none; }
   .pd-arrows { display:flex; gap:5px; margin-bottom:5px; }
+  .pd-aim-label { display:flex; justify-content:space-between; align-items:center; color:#ddecff; font-weight:800; font-size:11px; margin:2px 2px 6px; }
+  .pd-aim-label strong { color:var(--sb-yellow); font-size:12px; }
   .pd-arrow {
     flex:1; border:none; cursor:pointer; border-radius:10px 10px 4px 4px;
     background:linear-gradient(180deg,#5ba0e8,#1D4FA1);
@@ -76,6 +78,11 @@
   .pd-node.next { border-color:var(--sb-yellow); box-shadow:0 0 10px rgba(255,199,44,0.7); animation:sbPulse 1.6s infinite; }
   .pd-earnrow { display:flex; gap:8px; margin-top:14px; }
   .pd-earnrow .sb-btn { flex:1; }
+  .pd-rule {
+    margin:0 0 9px; padding:9px 11px; border-radius:12px; text-align:center;
+    background:rgba(8,34,76,.5); border:1px solid rgba(255,255,255,.16);
+    color:#fff; font-size:12px; line-height:1.35; font-weight:800;
+  }
   .pd-offer-pack {
     display:flex; align-items:center; gap:10px; width:100%;
     background:#fff; border:2px solid rgba(27,42,74,0.15); border-radius:14px;
@@ -119,6 +126,8 @@
       </span>
     </div>
 
+    <div class="pd-rule">Choose a drop lane, then watch the ball ricochet into a reward. Spend more balls for a bigger score multiplier.</div>
+    <div class="pd-aim-label"><span>CHOOSE YOUR DROP LANE</span><strong>▼ TAP ▼</strong></div>
     <div class="pd-arrows" id="pd-arrows">
       <button class="pd-arrow">▼</button><button class="pd-arrow">▼</button><button class="pd-arrow">▼</button><button class="pd-arrow">▼</button><button class="pd-arrow">▼</button>
     </div>
@@ -133,7 +142,7 @@
     </div>
 
     <div class="pd-earnrow">
-      <button class="sb-btn sb-btn-green sb-btn-sm" id="pd-play">▶ Play a level <b>(+2 🔮)</b></button>
+      <button class="sb-btn sb-btn-green sb-btn-sm" id="pd-play">Claim +2 balls <b>(Adventure)</b></button>
       <button class="sb-btn sb-btn-yellow sb-btn-sm" id="pd-shop">🛒 Get Balls</button>
     </div>
   </div>
@@ -156,7 +165,7 @@
   var st = SB.store("prize-drop", {
     balls:6, golden:0, jackpot:2000, points:0, tiers:0, endTs:0
   });
-  if (!st.data.endTs) { st.data.endTs = Date.now() + 72*3600*1000; st.save(); }
+  if (!st.data.endTs || st.data.endTs <= Date.now()) { st.data.endTs = Date.now() + 72*3600*1000; st.save(); }
 
   SB.countdown(document.getElementById("pd-timer"), st.data.endTs, function(){
     SB.toast("⏱ Event ended — reset demo to replay");

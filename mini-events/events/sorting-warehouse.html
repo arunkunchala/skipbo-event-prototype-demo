@@ -62,7 +62,7 @@
   .parcel {
     position:absolute; top:14px; width:54px; height:58px; border-radius:9px; cursor:pointer;
     border:2px solid rgba(0,0,0,0.35); box-shadow:0 4px 8px rgba(0,0,0,0.4);
-    display:grid; place-items:center; z-index:5; transition:transform 0.1s;
+    padding:0; display:grid; place-items:center; z-index:5; transition:transform 0.1s;
   }
   .parcel:active { transform:scale(0.9); }
   .parcel::before { content:""; position:absolute; left:50%; top:0; bottom:0; width:9px; transform:translateX(-50%);
@@ -104,7 +104,7 @@
     flex:1; border-radius:12px; padding:8px 6px 7px; text-align:center; position:relative;
     border:3px solid rgba(0,0,0,0.4); box-shadow:0 4px 8px rgba(0,0,0,0.35);
     background-image:repeating-linear-gradient(0deg, rgba(0,0,0,0.16) 0 6px, transparent 6px 15px);
-    transition:transform 0.15s;
+    color:inherit; font:inherit; transition:transform 0.15s;
   }
   .crate.c-red { background-color:var(--sb-red); } .crate.c-green { background-color:var(--sb-green); } .crate.c-blue { background-color:var(--sb-sky); }
   .crate .cico { font-size:24px; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.4)); }
@@ -155,6 +155,8 @@
   .recap-stats .n { font-size:22px; font-weight:900; color:var(--sb-blue); }
   .recap-stats .l { font-size:10px; font-weight:700; color:#5a6b8c; text-transform:uppercase; }
   .start-hero { font-size:46px; text-align:center; margin:4px 0; }
+  .sort-rule { margin:0 0 9px; padding:9px 11px; border-radius:12px; background:rgba(6,29,66,.52); border:1px solid rgba(255,255,255,.16); color:#fff; text-align:center; font-size:12px; line-height:1.35; font-weight:800; }
+  .sort-rule b { color:var(--sb-yellow); }
 </style>
 </head>
 <body>
@@ -172,6 +174,7 @@
       <div class="hud-chip" id="hud-combo-chip"><div class="lbl">Combo</div><div class="val" id="hud-combo">0</div></div>
       <button class="hud-undo" id="undo-btn">↩️<br><span id="undo-n">0</span></button>
     </div>
+    <div class="sort-rule"><b>TIMING GAME:</b> tap a moving parcel only while it is inside its matching RED, GREEN or BLUE belt zone.</div>
 
     <div class="scene" id="scene">
       <div class="belt-wrap">
@@ -209,6 +212,7 @@
     perfect: 0, fills: [0,0,0], totalSorted: 0
   });
   var S = st.data;
+  if (!S.endTs || S.endTs <= Date.now()) { S.endTs = Date.now() + 48*3600*1000; save(); }
   function save(){ st.save(); }
 
   // ---------- countdown ----------
@@ -234,7 +238,7 @@
   // ---------- build crates ----------
   var crateEls = [];
   COLORS.forEach(function(c,i){
-    var d = document.createElement("div");
+    var d = document.createElement("button"); d.type="button"; d.setAttribute("aria-label",c+" sorting crate");
     d.className = "crate c-"+c;
     d.innerHTML = '<div class="cico">'+CRATE_ICO[c]+'</div><div class="cmeter"><i></i></div>'
       + '<div class="ccount">0/'+CRATE_SIZE+'</div><div class="seal-flash">SEALED! ✔</div>';
@@ -299,9 +303,10 @@
   // ---------- parcels ----------
   var CVAR = { red:"var(--sb-red)", green:"var(--sb-green)", blue:"var(--sb-blue)" };
   function makeParcel(color, golden){
-    var el = document.createElement("div");
+    var el = document.createElement("button"); el.type="button";
     el.className = "parcel " + (golden ? "p-gold" : "p-"+color);
     var num = 1 + ((Math.random()*12)|0);
+    el.setAttribute("aria-label","Sort moving "+(golden?"golden ":"")+color+" parcel");
     el.innerHTML = '<span class="pcard">'+(golden ? "★" : num)+'</span>';
     if (golden) el.querySelector(".pcard").style.color = CVAR[color]; // show target crate color
     var p = { color:color, golden:!!golden, rainbow:false, el:el, x:0, slot:-1 };
@@ -554,7 +559,7 @@
         var us = G.undoStack.indexOf(G.slots[i]); if (us>-1) G.undoStack.splice(us,1);
         G.slots[i]=null; trayEls[i].innerHTML='<span class="tlabel">TRAY</span>'; freed++; }
     }
-    var el = document.createElement("div");
+    var el = document.createElement("button"); el.type="button"; el.setAttribute("aria-label","Sort held rainbow parcel");
     el.className = "parcel p-rainbow";
     el.innerHTML = '<span class="pcard">?</span>';
     var p = { color:"rainbow", golden:false, rainbow:true, el:el, x:0, slot:0 };
@@ -618,10 +623,11 @@
     G.playing = true; G.jammed = false;
     G.toSpawn = WAVE_PARCELS; G.timeLeft = WAVE_TIME;
     G.combo = 0; G.sortedThisWave = 0; G.goldenThisWave = 0;
-    G.spawnAcc = 1.2; G.lastTs = 0; G.offerShownThisWave = false; G.jamCount = 0;
+    G.spawnAcc = 0; G.lastTs = 0; G.offerShownThisWave = false; G.jamCount = 0;
     beltEl.classList.remove("paused");
     jamEl.classList.remove("show");
     renderHud();
+    spawnParcel();
     requestAnimationFrame(loop);
   }
   function spawnInterval(){ return Math.max(1.5, 3.4 - S.wave*0.25); }
@@ -699,9 +705,8 @@
       '<h3 style="margin:0 0 8px">📦 Sorting Warehouse</h3>' +
       '<p style="font-size:13px;text-align:left;line-height:1.5;color:#3c4a68">' +
       'Tap parcels while they ride over their matching colored zone to sort them straight into crates; mistimed taps land in scarce holding trays, and full trays jam the belt while the wave timer keeps running. ' +
-      'This borrows the viral color-sort / bus-jam ad format but makes it an honest, fully playable event instead of bait. ' +
-      'Monetization is contextual: jams surface the 4th tray and Wildcard Converter exactly when slot pressure peaks, while wave recaps upsell the Premium Crate and Warehouse Pass. ' +
-      'Crucially, a jam only pauses the run — accumulated crate fill and rewards are never destroyed, so purchases feel like acceleration, not loss-avoidance ransom.</p>' +
+      'Mistimed parcels land in one of three holding trays. Tap a held parcel to send it once its matching crate has space. ' +
+      'If every tray fills, the belt pauses so you can recover—your sorted parcels and earned rewards are never lost.</p>' +
       '<button class="sb-btn sb-btn-blue sb-btn-block" id="info-ok">Got it</button>'
     );
     m.el.querySelector("#info-ok").addEventListener("pointerdown", m.close);
