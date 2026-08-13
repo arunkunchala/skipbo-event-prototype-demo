@@ -71,8 +71,9 @@
       '<div class="sb-wallet"><span class="sb-coin-ico">🪙</span><span id="sb-wallet-amt">0</span></div>';
     app.insertBefore(bar, app.firstChild);
     if (!isHub) {
+      bar.querySelector("#sb-back").setAttribute("aria-label", "Back to complete prototype hub");
       bar.querySelector("#sb-back").addEventListener("click", function () {
-        location.href = location.pathname.indexOf("/events/") !== -1 ? "../index.html" : "index.html";
+        location.href = location.pathname.indexOf("/events/") !== -1 ? "../../#money" : "../#money";
       });
     }
     if (opts.resetKey) {

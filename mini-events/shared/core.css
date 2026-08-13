@@ -50,7 +50,8 @@ body { touch-action: manipulation; user-select: none; -webkit-user-select: none;
 .sb-topbar {
   position: sticky;
   top: 0;
-  z-index: 50;
+  /* Navigation must remain reachable above onboarding, reward and IAP layers. */
+  z-index: 500;
   display: flex;
   align-items: center;
   gap: 8px;
